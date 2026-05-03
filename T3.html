@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: 90vh;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .preview-img {
+            width: 100%;
+            max-height: 150px;
+            margin-top: 10px;
+            border-radius: 6px;
+            object-fit: contain;
+        }
+
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            display: flex;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 15px;
+            border-radius: 8px;
+            word-wrap: break-word;
+            font-size: 13px;
+        }
+
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .message:not(.user) .message-bubble {
+            background: #e8e8e8;
+            color: #333;
+        }
+
+        .table-output {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            overflow-x: auto;
+            font-size: 11px;
+            font-family: monospace;
+            max-width: 500px;
+        }
+
+        .table-output pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-top: 8px;
+        }
+
+        .copy-btn:hover {
+            background: #764ba2;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .input-area button {
+            padding: 10px 20px;
+        }
+
+        .info-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <input type="file" id="galleryInput" accept="image/*" style="display:none;">
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
+
+    <div class="container">
+        <!-- Panel Izquierdo -->
+        <div class="panel">
+            <div class="panel-header">📱 Entrada de Datos</div>
+            <div class="panel-content">
+                
+                <div class="section">
+                    <div class="section-title">📸 Foto del Ticket</div>
+                    <div class="button-group">
+                        <button class="btn-primary" onclick="clickGallery()">🖼️ Galería</button>
+                        <button class="btn-primary" onclick="clickCamera()">📷 Cámara</button>
+                    </div>
+                    <img id="preview" class="preview-img" style="display:none;">
+                </div>
+
+                <div class="section">
+                    <div class="section-title">🎤 Dicta un Gasto</div>
+                    <button class="btn-primary" style="width: 100%;" id="micBtn" onclick="startRecording()">🎤 Pulsa para Dictar</button>
+                    <div id="micStatus" style="margin-top: 10px; color: #667eea; font-weight: 600; display: none;">🔴 Escuchando...</div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">📝 Insertar Gasto</div>
+                    <input type="text" id="commandInput" placeholder="Ejemplo: gasto adicional Gasolina 25,50 Combustible">
+                    <button class="btn-primary" style="width: 100%;" onclick="sendCommand()">Insertar</button>
+                    <div class="info-box">
+                        <strong>Ejemplos:</strong><br/>
+                        • ticket Mercadona 45,99 INV001<br/>
+                        • gasto adicional Gasolina 25,50 Combustible<br/>
+                        • resumen
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Panel Derecho -->
+        <div class="panel">
+            <div class="panel-header">💬 Chat</div>
+            <div class="chat-area">
+                <div class="messages" id="chatMessages"></div>
+                <div class="input-area">
+                    <input type="text" id="chatInput" placeholder="O escribe aquí..." onkeypress="if(event.key==='Enter') sendChat()">
+                    <button class="btn-primary" onclick="sendChat()">Enviar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ticketData = null;
+        let additionalExpenses = [];
+        let recognition = null;
+        
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'es-ES';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                const micStatus = document.getElementById('micStatus');
+                const micBtn = document.getElementById('micBtn');
+                if (micStatus) micStatus.style.display = 'block';
+                if (micBtn) micBtn.disabled = true;
+                console.log('Micrófono activado');
+            };
+
+            recognition.onend = () => {
+                const micStatus = document.getElementById('micStatus');
+                const micBtn = document.getElementById('micBtn');
+                if (micStatus) micStatus.style.display = 'none';
+                if (micBtn) micBtn.disabled = false;
+                console.log('Micrófono desactivado');
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[event.results.length - 1][0].transcript.trim();
+                console.log('Transcripción:', transcript);
+                addMessage(transcript, 'user');
+                processVoice(transcript);
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Error de micrófono:', event.error);
+                let errorMsg = '';
+                
+                switch(event.error) {
+                    case 'not-allowed':
+                        errorMsg = '❌ Permiso denegado\n\n📍 SOLUCIÓN:\n1. Haz clic en el candado 🔒 en la barra de direcciones\n2. Busca "Micrófono"\n3. Cambia a "Permitir"\n4. Recarga la página\n5. Intenta de nuevo';
+                        break;
+                    case 'no-speech':
+                        errorMsg = '❌ No se detectó sonido\n💡 Habla más fuerte o acércate al micrófono';
+                        break;
+                    case 'network':
+                        errorMsg = '❌ Error de conexión\n💡 Verifica tu conexión a internet';
+                        break;
+                    case 'service-not-allowed':
+                        errorMsg = '❌ Servicio no disponible\n💡 El navegador bloqueó el acceso al micrófono';
+                        break;
+                    default:
+                        errorMsg = `❌ Error: ${event.error}`;
+                }
+                
+                addMessage(errorMsg, 'system');
+                const micStatus = document.getElementById('micStatus');
+                const micBtn = document.getElementById('micBtn');
+                if (micStatus) micStatus.style.display = 'none';
+                if (micBtn) micBtn.disabled = false;
+            };
+        }
+
+        function clickGallery() {
+            const input = document.getElementById('galleryInput');
+            if (!input) {
+                console.error('Elemento galleryInput no encontrado');
+                addMessage('❌ Error: No se pudo abrir la galería', 'system');
+                return;
+            }
+            console.log('Abriendo galería...');
+            input.click();
+        }
+
+        function clickCamera() {
+            const input = document.getElementById('cameraInput');
+            if (!input) {
+                console.error('Elemento cameraInput no encontrado');
+                addMessage('❌ Error: No se pudo abrir la cámara', 'system');
+                return;
+            }
+            console.log('Abriendo cámara...');
+            input.click();
+        }
+
+        function startRecording() {
+            if (!SpeechRecognition) {
+                addMessage('❌ Tu navegador NO soporta reconocimiento de voz. Usa Chrome, Edge o Safari reciente.', 'system');
+                return;
+            }
+            
+            if (!recognition) {
+                addMessage('❌ Inicializando micrófono... intenta de nuevo', 'system');
+                return;
+            }
+
+            try {
+                console.log('Iniciando grabación...');
+                // Abortar cualquier sesión anterior
+                try {
+                    recognition.abort();
+                } catch(e) {
+                    console.log('No hay sesión anterior para abortar');
+                }
+                
+                // Pequeño delay y luego iniciar
+                setTimeout(() => {
+                    recognition.start();
+                }, 100);
+            } catch (e) {
+                console.error('Error al iniciar:', e);
+                addMessage(`❌ Error: ${e.message}\n💡 Asegúrate de haber permitido acceso al micrófono en tu navegador.`, 'system');
+            }
+        }
+
+        function handleImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('preview').src = e.target.result;
+                document.getElementById('preview').style.display = 'block';
+                
+                const stores = ['Mercadona', 'Carrefour', 'Alcampo', 'Lidl', 'Repsol'];
+                const store = stores[Math.floor(Math.random() * stores.length)];
+                const total = (Math.random() * 100 + 10).toFixed(2);
+
+                ticketData = {
+                    date: new Date().toISOString().split('T')[0],
+                    store,
+                    total: parseFloat(total),
+                    invoiceCode: 'TKT' + Math.floor(Math.random() * 100000)
+                };
+
+                addMessage(`✅ Ticket: ${store} - ${formatPrice(total)}€`, 'assistant');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function processVoice(text) {
+            const parts = text.split(/\s+/);
+            let amountIndex = -1;
+            
+            for (let i = 0; i < parts.length; i++) {
+                const num = parseFloat(parts[i].replace(',', '.'));
+                if (!isNaN(num) && num > 0) {
+                    amountIndex = i;
+                    break;
+                }
+            }
+
+            if (amountIndex >= 1) {
+                const concept = parts.slice(0, amountIndex).join(' ');
+                const amount = parseFloat(parts[amountIndex].replace(',', '.'));
+                const section = parts.slice(amountIndex + 1).join(' ') || concept;
+
+                additionalExpenses.push({
+                    date: new Date().toISOString().split('T')[0],
+                    concept, amount, section
+                });
+
+                addMessage(`✅ Gasto: ${concept} - ${formatPrice(amount)}€`, 'assistant');
+            } else {
+                addMessage('❓ No entendí. Dicta: "Gasolina 25,50 Combustible"', 'assistant');
+            }
+        }
+
+        function sendCommand() {
+            const input = document.getElementById('commandInput');
+            const cmd = input.value.trim();
+            if (!cmd) return;
+
+            input.value = '';
+            addMessage(cmd, 'user');
+            processCmd(cmd);
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            input.value = '';
+            addMessage(msg, 'user');
+            processCmd(msg);
+        }
+
+        function processCmd(cmd) {
+            const lower = cmd.toLowerCase();
+
+            if (lower.startsWith('ticket ')) {
+                const match = cmd.match(/ticket\s+(.+?)\s+([\d,\.]+)\s+(.+)/i);
+                if (match) {
+                    ticketData = {
+                        date: new Date().toISOString().split('T')[0],
+                        store: match[1].trim(),
+                        total: parseFloat(match[2].replace(',', '.')),
+                        invoiceCode: match[3].trim()
+                    };
+                    addMessage(`✅ Ticket: ${match[1].trim()} - ${formatPrice(match[2])}€`, 'assistant');
+                    generateResumenAuto();
+                } else {
+                    addMessage('❌ Formato: ticket [tienda] [total] [código]', 'system');
+                }
+            } else if (lower.startsWith('gasto adicional ')) {
+                const match = cmd.match(/gasto\s+adicional\s+(.+?)\s+([\d,\.]+)\s+(.+)/i);
+                if (match) {
+                    additionalExpenses.push({
+                        date: new Date().toISOString().split('T')[0],
+                        concept: match[1].trim(),
+                        amount: parseFloat(match[2].replace(',', '.')),
+                        section: match[3].trim()
+                    });
+                    addMessage(`✅ Gasto: ${match[1].trim()} - ${formatPrice(match[2])}€`, 'assistant');
+                    generateResumenAuto();
+                } else {
+                    addMessage('❌ Formato: gasto adicional [concepto] [importe] [sección]', 'system');
+                }
+            } else if (lower === 'resumen' || lower === 'suban') {
+                generateResumenManual();
+            } else if (lower === 'reseteo') {
+                ticketData = null;
+                additionalExpenses = [];
+                document.getElementById('preview').style.display = 'none';
+                addMessage('🔄 Resetado', 'system');
+            } else {
+                addMessage('📌 Comandos: ticket, gasto adicional, resumen, reseteo', 'assistant');
+            }
+        }
+
+        function generateResumenAuto() {
+            if (!ticketData && additionalExpenses.length === 0) {
+                return;
+            }
+
+            let table = '';
+            if (ticketData) {
+                table += `${ticketData.date}\tSuper\t-${formatPrice(ticketData.total)}\t${ticketData.store}\t0\t${getYearMonth(ticketData.date)}\t${ticketData.store}\t${ticketData.invoiceCode}\t${getMonth(ticketData.date)}\n`;
+            }
+            additionalExpenses.forEach(exp => {
+                table += `${exp.date}\t${exp.concept}\t-${formatPrice(exp.amount)}\t${ticketData?.store || 'Otro'}\t0\t${getYearMonth(exp.date)}\t${exp.section}\t${ticketData?.invoiceCode || 'ADI'}\t${getMonth(exp.date)}\n`;
+            });
+
+            const total = (ticketData?.total || 0) + additionalExpenses.reduce((s, e) => s + e.amount, 0);
+            
+            showTableExcel(table, total);
+        }
+
+        function generateResumenManual() {
+            if (!ticketData && additionalExpenses.length === 0) {
+                addMessage('❌ Agrega datos primero', 'system');
+                return;
+            }
+            generateResumenAuto();
+        }
+
+        function showTable(title, table) {
+            // Esta función ya no se usa, usamos showTableExcel en su lugar
+        }
+
+        function showTableExcel(table, total) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message';
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            
+            const tableDiv = document.createElement('div');
+            tableDiv.className = 'table-output';
+            
+            const pre = document.createElement('pre');
+            pre.textContent = table;
+            tableDiv.appendChild(pre);
+            
+            const btn = document.createElement('button');
+            btn.className = 'copy-btn';
+            btn.textContent = '📋 Copiar para Excel';
+            btn.type = 'button';
+            btn.onclick = function() {
+                const text = pre.textContent;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        btn.textContent = '✅ Copiado';
+                        setTimeout(() => btn.textContent = '📋 Copiar para Excel', 2000);
+                    }).catch(() => {
+                        const textarea = document.createElement('textarea');
+                        textarea.value = text;
+                        document.body.appendChild(textarea);
+                        textarea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textarea);
+                        btn.textContent = '✅ Copiado';
+                        setTimeout(() => btn.textContent = '📋 Copiar para Excel', 2000);
+                    });
+                } else {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    btn.textContent = '✅ Copiado';
+                    setTimeout(() => btn.textContent = '📋 Copiar para Excel', 2000);
+                }
+            };
+            tableDiv.appendChild(btn);
+            
+            const totalDiv = document.createElement('div');
+            totalDiv.style.marginTop = '10px';
+            totalDiv.style.fontSize = '14px';
+            totalDiv.style.fontWeight = 'bold';
+            totalDiv.style.color = '#667eea';
+            totalDiv.textContent = `💰 TOTAL: -${formatPrice(total)}€`;
+            tableDiv.appendChild(totalDiv);
+            
+            bubble.appendChild(tableDiv);
+            msgDiv.appendChild(bubble);
+            document.getElementById('chatMessages').appendChild(msgDiv);
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        }
+
+        function formatPrice(price) {
+            return parseFloat(price).toFixed(2).replace('.', ',');
+        }
+
+        function getYearMonth(date) {
+            const d = new Date(date);
+            return (d.getFullYear() * 100 + d.getMonth() + 1).toString();
+        }
+
+        function getMonth(date) {
+            const d = new Date(date);
+            return (d.getMonth() + 1).toString();
+        }
+
+        function addMessage(text, type = 'assistant') {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${type === 'user' ? 'user' : ''}`;
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.textContent = text;
+            msgDiv.appendChild(bubble);
+            document.getElementById('chatMessages').appendChild(msgDiv);
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        }
+
+        window.addEventListener('load', () => {
+            addMessage('¡Hola! Sube foto, dicta o escribe un comando. 👋', 'assistant');
+            
+            // Asignar event listeners a los inputs de archivo
+            const galleryInput = document.getElementById('galleryInput');
+            const cameraInput = document.getElementById('cameraInput');
+            
+            if (galleryInput) {
+                galleryInput.addEventListener('change', handleImage);
+            } else {
+                console.error('galleryInput no encontrado');
+            }
+            
+            if (cameraInput) {
+                cameraInput.addEventListener('change', handleImage);
+            } else {
+                console.error('cameraInput no encontrado');
+            }
+        });
+    </script>
+</body>
+</html>
