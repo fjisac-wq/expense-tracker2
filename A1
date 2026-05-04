@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift Report - APM Terminals</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --color-primary: #1a3a52;
+            --color-primary-light: #2d5a7b;
+            --color-accent: #e74c3c;
+            --color-success: #27ae60;
+            --color-warning: #f39c12;
+            --color-danger: #c0392b;
+            --color-info: #3498db;
+            --color-border: #bdc3c7;
+            --color-border-light: #ecf0f1;
+            --color-bg: #f5f7fa;
+            --color-bg-white: #ffffff;
+            --color-text-primary: #2c3e50;
+            --color-text-secondary: #7f8c8d;
+            --color-text-muted: #95a5a6;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            --font-mono: 'Courier New', monospace;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 2px 8px rgba(0,0,0,0.12);
+            --shadow-lg: 0 8px 16px rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--color-bg);
+            color: var(--color-text-primary);
+            line-height: 1.6;
+        }
+
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== TOPBAR ===== */
+        .topbar {
+            background: var(--color-primary);
+            color: white;
+            padding: 0 24px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-md);
+            border-bottom: 3px solid var(--color-accent);
+        }
+
+        .topbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: 0.3px;
+        }
+
+        .topbar-logo svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .topbar-title {
+            flex: 1;
+            margin-left: 24px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .topbar-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+        }
+
+        .status-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .status-badge.unsaved {
+            background: rgba(231, 76, 60, 0.3);
+            color: #ffcccc;
+        }
+
+        /* ===== MAIN LAYOUT ===== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .page {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: auto;
+        }
+
+        .page-header {
+            background: var(--color-bg-white);
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--color-border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .page-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--color-primary);
+        }
+
+        .page-subtitle {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            margin-top: 2px;
+        }
+
+        .page-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        /* ===== SHIFT SELECTOR PAGE ===== */
+        .shift-selector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            padding: 60px 24px;
+        }
+
+        .shift-selector-card {
+            background: var(--color-bg-white);
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .shift-selector-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--color-primary);
+            margin-bottom: 8px;
+        }
+
+        .shift-selector-subtitle {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            margin-bottom: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            font-family: var(--font-sans);
+            font-size: 13px;
+            color: var(--color-text-primary);
+            background: var(--color-bg-white);
+            transition: all 0.2s;
+        }
+
+        .form-control:hover {
+            border-color: var(--color-primary-light);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(26, 58, 82, 0.1);
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-light);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: var(--color-border-light);
+            color: var(--color-text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-border);
+        }
+
+        .btn-danger {
+            background: var(--color-danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #a93226;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* ===== TABS ===== */
+        .tabs-header {
+            background: var(--color-bg-white);
+            border-bottom: 1px solid var(--color-border-light);
+            padding: 0 24px;
+            display: flex;
+            gap: 0;
+        }
+
+        .tab-button {
+            background: transparent;
+            border: none;
+            padding: 16px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-button:hover {
+            color: var(--color-text-primary);
+            background: var(--color-bg);
+        }
+
+        .tab-button.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 24px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ===== SECTION BOXES ===== */
+        .section {
+            background: var(--color-bg-white);
+            border: 1px solid var(--color-border-light);
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-primary);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section-subtitle {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 16px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        /* ===== VESSEL OPERATIONS TABLE ===== */
+        .vessel-group {
+            margin-bottom: 28px;
+        }
+
+        .vessel-group-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            background: var(--color-primary);
+            padding: 10px 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .vessel-group-count {
+            background: rgba(255,255,255,0.3);
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-left: auto;
+        }
+
+        .vessel-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-bottom: 16px;
+        }
+
+        .vessel-table th {
+            background: var(--color-bg);
+            color: var(--color-text-primary);
+            font-weight: 600;
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border-light);
+            white-space: nowrap;
+        }
+
+        .vessel-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--color-border-light);
+            white-space: nowrap;
+        }
+
+        .vessel-table tbody tr:hover {
+            background: var(--color-bg);
+        }
+
+        .vessel-row-name {
+            font-weight: 600;
+            color: var(--color-primary);
+            min-width: 120px;
+        }
+
+        .metric-cell {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-green { background: var(--color-success); }
+        .status-yellow { background: var(--color-warning); }
+        .status-red { background: var(--color-danger); }
+
+        .vessel-remark-input {
+            width: 100%;
+            min-height: 60px;
+            padding: 8px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            font-family: var(--font-sans);
+            font-size: 12px;
+            resize: vertical;
+        }
+
+        /* ===== KPI CARDS ===== */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .kpi-card {
+            background: var(--color-bg);
+            border: 1px solid var(--color-border-light);
+            border-radius: 6px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .kpi-label {
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--color-primary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .kpi-value.accent {
+            color: var(--color-accent);
+        }
+
+        .kpi-unit {
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            margin-top: 4px;
+        }
+
+        /* ===== TEXTAREA ===== */
+        .textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            font-family: var(--font-sans);
+            font-size: 13px;
+            resize: vertical;
+            color: var(--color-text-primary);
+        }
+
+        .textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(26, 58, 82, 0.1);
+        }
+
+        .required-indicator {
+            color: var(--color-danger);
+        }
+
+        /* ===== VALIDATION ===== */
+        .validation-message {
+            font-size: 12px;
+            color: var(--color-danger);
+            margin-top: 6px;
+            display: none;
+        }
+
+        .validation-message.show {
+            display: block;
+        }
+
+        .form-group.invalid .form-control,
+        .form-group.invalid .textarea {
+            border-color: var(--color-danger);
+            background: rgba(192, 57, 43, 0.02);
+        }
+
+        /* ===== ACTION BAR ===== */
+        .action-bar {
+            background: var(--color-bg-white);
+            border-top: 1px solid var(--color-border-light);
+            padding: 16px 24px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* ===== INCOMING REMARK ===== */
+        .incoming-remark-section {
+            background: var(--color-bg-white);
+            border-left: 4px solid var(--color-info);
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .incoming-remark-section .form-label {
+            color: var(--color-info);
+            font-weight: 600;
+        }
+
+        /* ===== SHIFT INFO TABLE ===== */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .info-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--color-border-light);
+        }
+
+        .info-table .label {
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            width: 140px;
+            background: var(--color-bg);
+        }
+
+        .info-table .value {
+            color: var(--color-text-primary);
+            font-weight: 500;
+        }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--color-bg-white);
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            padding: 28px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-primary);
+            margin-bottom: 12px;
+        }
+
+        .modal-message {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* ===== HIDDEN PRINT STYLES ===== */
+        .hidden-print {
+            display: none;
+        }
+
+        @media print {
+            .hidden-print {
+                display: block;
+            }
+            body {
+                background: white;
+            }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .kpi-grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+            .vessel-table {
+                font-size: 11px;
+            }
+            .vessel-table th,
+            .vessel-table td {
+                padding: 8px 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- TOPBAR -->
+        <div class="topbar">
+            <div class="topbar-logo">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 2C5.58 2 2 5.58 2 10s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/>
+                </svg>
+                SHIFT REPORT
+            </div>
+            <div class="topbar-title" id="topbarTitle">Select a shift to begin</div>
+            <div class="topbar-status">
+                <span class="status-badge" id="saveStatus" style="display:none;">Unsaved</span>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- SHIFT SELECTOR PAGE -->
+            <div id="shiftSelectorPage" class="page">
+                <div class="shift-selector">
+                    <div class="shift-selector-card">
+                        <h1 class="shift-selector-title">Shift Report</h1>
+                        <p class="shift-selector-subtitle">APM Terminals Operations</p>
+                        
+                        <form id="shiftForm" onsubmit="handleSelectShift(event)">
+                            <div class="form-group">
+                                <label class="form-label">Select Shift <span class="required-indicator">*</span></label>
+                                <select id="shiftSelect" class="form-control" required>
+                                    <option value="">-- Choose a shift --</option>
+                                    <option value="2024-01-15-0600">2024-01-15 06:00 - 14:00</option>
+                                    <option value="2024-01-15-1400">2024-01-15 14:00 - 22:00</option>
+                                    <option value="2024-01-15-2200">2024-01-15 22:00 - 06:00</option>
+                                    <option value="2024-01-16-0600">2024-01-16 06:00 - 14:00</option>
+                                    <option value="2024-01-16-1400">2024-01-16 14:00 - 22:00</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                Go to Shift
+                                <span>→</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SHIFT DETAIL PAGE -->
+            <div id="shiftDetailPage" class="page" style="display:none;">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title" id="pageTitle">Shift Report</h1>
+                        <p class="page-subtitle" id="pageSubtitle">Date and Time</p>
+                    </div>
+                    <button class="btn btn-secondary btn-small" onclick="goBackToSelector()">← Back</button>
+                </div>
+
+                <!-- TABS HEADER -->
+                <div class="tabs-header">
+                    <button class="tab-button active" data-tab="vesselOps">Vessel Operations</button>
+                    <button class="tab-button" data-tab="shiftRemarks">Shift Remarks</button>
+                    <button class="tab-button" data-tab="vesselRemarks">Vessel Remarks</button>
+                </div>
+
+                <!-- TAB CONTENT -->
+                <div class="page-content">
+                    <!-- VESSEL OPERATIONS TAB -->
+                    <div id="vesselOps" class="tab-content active">
+                        <!-- INCOMING REMARK -->
+                        <div class="incoming-remark-section">
+                            <label class="form-label">Incoming Vessel Remark</label>
+                            <p style="font-size: 11px; color: var(--color-text-muted); margin-bottom: 12px;">Describe incoming vessel situation, ETA changes, or anticipated issues</p>
+                            <textarea id="incomingRemark" class="textarea" placeholder="Enter incoming vessel notes..."></textarea>
+                        </div>
+
+                        <!-- COMPLETED VESSELS -->
+                        <div class="vessel-group">
+                            <div class="vessel-group-title">
+                                ✓ Operation Completed
+                                <span class="vessel-group-count" id="completedCount">0</span>
+                            </div>
+                            <table class="vessel-table" id="completedVessels">
+                                <thead>
+                                    <tr>
+                                        <th>Vessel</th>
+                                        <th>Code</th>
+                                        <th>Line</th>
+                                        <th>Service</th>
+                                        <th>Gangs</th>
+                                        <th>Moves</th>
+                                        <th>CMPH</th>
+                                        <th>PMPH</th>
+                                        <th>PortStay</th>
+                                        <th>First Lift</th>
+                                        <th>All Fast</th>
+                                        <th>Est. Time</th>
+                                        <th>Remark</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+
+                        <!-- UNDER OPERATION VESSELS -->
+                        <div class="vessel-group">
+                            <div class="vessel-group-title">
+                                ⚙ Under Operations
+                                <span class="vessel-group-count" id="operatingCount">0</span>
+                            </div>
+                            <table class="vessel-table" id="operatingVessels">
+                                <thead>
+                                    <tr>
+                                        <th>Vessel</th>
+                                        <th>Code</th>
+                                        <th>Line</th>
+                                        <th>Service</th>
+                                        <th>Gangs</th>
+                                        <th>Planned Moves</th>
+                                        <th>Moves</th>
+                                        <th>CMPH</th>
+                                        <th>CMPH Plan</th>
+                                        <th>PMPH Target</th>
+                                        <th>PortStay</th>
+                                        <th>Idle Arrival</th>
+                                        <th>Remark</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+
+                        <!-- INCOMING VESSELS -->
+                        <div class="vessel-group">
+                            <div class="vessel-group-title">
+                                ⬇ Incoming
+                                <span class="vessel-group-count" id="incomingCount">0</span>
+                            </div>
+                            <table class="vessel-table" id="incomingVessels">
+                                <thead>
+                                    <tr>
+                                        <th>Vessel</th>
+                                        <th>Code</th>
+                                        <th>Line</th>
+                                        <th>Service</th>
+                                        <th>Planned Moves</th>
+                                        <th>Est. Arrival</th>
+                                        <th>Remark</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SHIFT REMARKS TAB -->
+                    <div id="shiftRemarks" class="tab-content">
+                        <!-- WEEK INFORMATION -->
+                        <div class="section">
+                            <h3 class="section-title">Week Information</h3>
+                            <table class="info-table">
+                                <tr>
+                                    <td class="label">Week</td>
+                                    <td class="value" id="weekInfo">Week 03, 2024</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Terminal</td>
+                                    <td class="value">APM Terminal Port A</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Planning Status</td>
+                                    <td class="value">Operational</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- SHIFT INFORMATION -->
+                        <div class="section">
+                            <h3 class="section-title">Shift Information</h3>
+                            
+                            <div class="kpi-grid">
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Dockers Shift</div>
+                                    <div class="kpi-value" id="dockersValue">1,240</div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Total Moves</div>
+                                    <div class="kpi-value" id="totalMovesValue">847</div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Avg CMPH</div>
+                                    <div class="kpi-value" id="cmphValue">68.5</div>
+                                    <div class="kpi-unit">moves/hour</div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Yard Density</div>
+                                    <div class="kpi-value" id="yardDensityValue">82.3</div>
+                                    <div class="kpi-unit">%</div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Reshuffling</div>
+                                    <div class="kpi-value" id="reshuffleValue">12</div>
+                                    <div class="kpi-unit">moves</div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Gate Traffic</div>
+                                    <div class="kpi-value" id="gateValue">324</div>
+                                    <div class="kpi-unit">transactions</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SHIFT FEEDBACK -->
+                        <div class="section">
+                            <h3 class="section-title">Shift Feedback</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Operational Remark <span class="required-indicator">*</span></label>
+                                <textarea id="remarkInput" class="textarea" placeholder="Provide a general operational summary of the shift..."></textarea>
+                                <div class="validation-message" id="remarkValidation">Operational remark is required</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Safety Observations <span class="required-indicator">*</span></label>
+                                <textarea id="safetyInput" class="textarea" placeholder="Record safety-related observations, incidents, near-miss events, or HSE notes..."></textarea>
+                                <div class="validation-message" id="safetyValidation">Safety observations are required</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Wind Level <span class="required-indicator">*</span></label>
+                                <select id="windLevelInput" class="form-control" required>
+                                    <option value="">-- Select wind level --</option>
+                                    <option value="calm">Calm (0-3 knots)</option>
+                                    <option value="light">Light (4-6 knots)</option>
+                                    <option value="moderate">Moderate (7-10 knots)</option>
+                                    <option value="strong">Strong (11-15 knots)</option>
+                                    <option value="extreme">Extreme (>15 knots)</option>
+                                </select>
+                                <div class="validation-message" id="windValidation">Wind level is required</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VESSEL REMARKS TAB -->
+                    <div id="vesselRemarks" class="tab-content">
+                        <div class="section">
+                            <h3 class="section-title">Vessel-Level Remarks</h3>
+                            <p style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 16px;">Edit and review vessel remarks for all operations in this shift.</p>
+                            <div id="vesselRemarksContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACTION BAR -->
+                <div class="action-bar">
+                    <button class="btn btn-secondary" onclick="goBackToSelector()">Cancel</button>
+                    <button class="btn btn-primary" onclick="generatePDFReport()">
+                        📄 Final Report (PDF)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VALIDATION MODAL -->
+    <div id="validationModal" class="modal-overlay">
+        <div class="modal">
+            <h2 class="modal-title">⚠ Missing Required Fields</h2>
+            <p class="modal-message" id="validationText">Please fill in all required fields before generating the report.</p>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="closeModal()">Understood</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUCCESS MODAL -->
+    <div id="successModal" class="modal-overlay">
+        <div class="modal">
+            <h2 class="modal-title">✓ Report Generated</h2>
+            <p class="modal-message">Your shift report has been successfully generated and downloaded as PDF.</p>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="goBackToSelector(); closeModal()">Back to Selector</button>
+                <button class="btn btn-primary" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== APPLICATION STATE =====
+        let appState = {
+            currentShift: null,
+            vessels: [],
+            remarks: {},
+            shiftFeedback: {
+                remark: '',
+                safety: '',
+                windLevel: ''
+            },
+            incomingRemark: '',
+            modified: false
+        };
+
+        // ===== MOCK DATA GENERATOR =====
+        function generateMockVessels() {
+            const vessels = [
+                // Completed
+                { id: 1, name: 'MSC GULSUN', code: 'GULSUN', line: 'MSC', service: 'FEU', status: 'completed', gangs: 4, plannedMoves: 1100, moves: 1156, cmph: 82.5, cmphPlan: 75, pmphTarget: 95, pmphActual: 89, portStay: 13.2, portStayFactor: 1.05, firstLift: '06:30', allFast: '20:15', idleArrival: 0.5, estimatedTime: 20 },
+                { id: 2, name: 'EVER GIVEN', code: 'EVERGVN', line: 'EVER', service: 'TEU', status: 'completed', gangs: 3, plannedMoves: 820, moves: 798, cmph: 69.8, cmphPlan: 72, pmphTarget: 88, pmphActual: 85, portStay: 12.1, portStayFactor: 0.98, firstLift: '06:45', allFast: '19:30', idleArrival: 0.2, estimatedTime: 19 },
+                
+                // Under Operations
+                { id: 3, name: 'CMA CGM ANTOINE', code: 'CMACGM', line: 'CMA', service: 'FEU', status: 'operating', gangs: 5, plannedMoves: 950, moves: 547, cmph: 71.2, cmphPlan: 74, pmphTarget: 92, pmphActual: 78, portStay: 8.4, portStayFactor: 1.02, firstLift: '10:15', allFast: null, idleArrival: 1.1, estimatedTime: null },
+                { id: 4, name: 'MAERSK SEATRADE', code: 'MAERSK', line: 'MAERSK', service: 'TEU', status: 'operating', gangs: 4, plannedMoves: 780, moves: 423, cmph: 65.4, cmphPlan: 68, pmphTarget: 85, pmphActual: 72, portStay: 6.2, portStayFactor: 0.95, firstLift: '11:30', allFast: null, idleArrival: 0.3, estimatedTime: null },
+                
+                // Incoming
+                { id: 5, name: 'ONE INNOVATION', code: 'ONEINNO', line: 'ONE', service: 'FEU', status: 'incoming', plannedMoves: 1200, eta: '22:00', estimatedTime: null },
+                { id: 6, name: 'HAPAG EXPRESS', code: 'HAPAG', line: 'HAPAG', service: 'TEU', status: 'incoming', plannedMoves: 620, eta: '23:30', estimatedTime: null },
+            ];
+            return vessels;
+        }
+
+        // ===== TAB SWITCHING =====
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tabName = this.getAttribute('data-tab');
+                switchTab(tabName);
+            });
+        });
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // ===== SHIFT SELECTION =====
+        function handleSelectShift(e) {
+            e.preventDefault();
+            const shiftValue = document.getElementById('shiftSelect').value;
+            if (!shiftValue) return;
+
+            appState.currentShift = shiftValue;
+            appState.vessels = generateMockVessels();
+            appState.remarks = {};
+            appState.shiftFeedback = { remark: '', safety: '', windLevel: '' };
+            appState.incomingRemark = '';
+            appState.modified = false;
+
+            // Parse shift date/time
+            const [date, time] = shiftValue.split('-');
+            const dateObj = new Date(date);
+            const timeStr = time.substring(0, 2) + ':' + time.substring(2, 4);
+            const nextTime = String((parseInt(time.substring(0, 2)) + 8) % 24).padStart(2, '0') + ':' + time.substring(2, 4);
+
+            document.getElementById('pageTitle').textContent = `Shift Report - ${dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${timeStr} - ${nextTime}`;
+            document.getElementById('pageSubtitle').textContent = `${dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}`;
+            document.getElementById('topbarTitle').textContent = `Shift: ${dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${timeStr} - ${nextTime}`;
+
+            renderVesselOperations();
+            initializeVesselRemarks();
+            updateKPIs();
+
+            document.getElementById('shiftSelectorPage').style.display = 'none';
+            document.getElementById('shiftDetailPage').style.display = 'flex';
+        }
+
+        // ===== RENDER VESSEL OPERATIONS =====
+        function renderVesselOperations() {
+            const completed = appState.vessels.filter(v => v.status === 'completed');
+            const operating = appState.vessels.filter(v => v.status === 'operating');
+            const incoming = appState.vessels.filter(v => v.status === 'incoming');
+
+            document.getElementById('completedCount').textContent = completed.length;
+            document.getElementById('operatingCount').textContent = operating.length;
+            document.getElementById('incomingCount').textContent = incoming.length;
+
+            renderVesselTable('completedVessels', completed, 'completed');
+            renderVesselTable('operatingVessels', operating, 'operating');
+            renderVesselTable('incomingVessels', incoming, 'incoming');
+        }
+
+        function renderVesselTable(tableId, vessels, status) {
+            const tbody = document.querySelector(`#${tableId} tbody`);
+            tbody.innerHTML = '';
+
+            vessels.forEach(vessel => {
+                const row = document.createElement('tr');
+                
+                if (status === 'completed') {
+                    row.innerHTML = `
+                        <td class="vessel-row-name"><span class="status-indicator status-green"></span>${vessel.name}</td>
+                        <td>${vessel.code}</td>
+                        <td>${vessel.line}</td>
+                        <td>${vessel.service}</td>
+                        <td class="metric-cell">${vessel.gangs}</td>
+                        <td class="metric-cell">${vessel.moves}</td>
+                        <td class="metric-cell"><span ${vessel.cmph > vessel.cmphPlan ? 'style="color: var(--color-success);"' : 'style="color: var(--color-warning);"'}>${vessel.cmph}</span></td>
+                        <td class="metric-cell"><span ${vessel.pmphActual > vessel.pmphTarget * 0.85 ? 'style="color: var(--color-success);"' : 'style="color: var(--color-danger);"'}>${vessel.pmphActual}</span></td>
+                        <td class="metric-cell"><span ${vessel.portStayFactor > 1.02 ? 'style="color: var(--color-danger);"' : 'style="color: var(--color-success);"'}>${vessel.portStay}h</span></td>
+                        <td>${vessel.firstLift}</td>
+                        <td>${vessel.allFast}</td>
+                        <td class="metric-cell">${vessel.estimatedTime}h</td>
+                        <td><textarea class="vessel-remark-input" onchange="updateRemark(${vessel.id}, this.value)" placeholder="Add remark...">${appState.remarks[vessel.id] || ''}</textarea></td>
+                    `;
+                } else if (status === 'operating') {
+                    row.innerHTML = `
+                        <td class="vessel-row-name"><span class="status-indicator status-yellow"></span>${vessel.name}</td>
+                        <td>${vessel.code}</td>
+                        <td>${vessel.line}</td>
+                        <td>${vessel.service}</td>
+                        <td class="metric-cell">${vessel.gangs}</td>
+                        <td class="metric-cell">${vessel.plannedMoves}</td>
+                        <td class="metric-cell">${vessel.moves}</td>
+                        <td class="metric-cell"><span ${vessel.cmph > vessel.cmphPlan ? 'style="color: var(--color-success);"' : 'style="color: var(--color-warning);"'}>${vessel.cmph}</span></td>
+                        <td class="metric-cell">${vessel.cmphPlan}</td>
+                        <td class="metric-cell">${vessel.pmphTarget}</td>
+                        <td class="metric-cell"><span ${vessel.portStayFactor > 1.02 ? 'style="color: var(--color-danger);"' : 'style="color: var(--color-success);"'}>${vessel.portStay}h</span></td>
+                        <td class="metric-cell">${vessel.idleArrival}h</td>
+                        <td><textarea class="vessel-remark-input" onchange="updateRemark(${vessel.id}, this.value)" placeholder="Add remark...">${appState.remarks[vessel.id] || ''}</textarea></td>
+                    `;
+                } else {
+                    row.innerHTML = `
+                        <td class="vessel-row-name"><span class="status-indicator status-red"></span>${vessel.name}</td>
+                        <td>${vessel.code}</td>
+                        <td>${vessel.line}</td>
+                        <td>${vessel.service}</td>
+                        <td class="metric-cell">${vessel.plannedMoves}</td>
+                        <td class="metric-cell">${vessel.eta}</td>
+                        <td><textarea class="vessel-remark-input" onchange="updateRemark(${vessel.id}, this.value)" placeholder="Add remark...">${appState.remarks[vessel.id] || ''}</textarea></td>
+                    `;
+                }
+                tbody.appendChild(row);
+            });
+        }
+
+        // ===== INITIALIZE VESSEL REMARKS =====
+        function initializeVesselRemarks() {
+            const container = document.getElementById('vesselRemarksContainer');
+            container.innerHTML = '';
+
+            appState.vessels.forEach(vessel => {
+                const div = document.createElement('div');
+                div.style.marginBottom = '20px';
+                div.innerHTML = `
+                    <div style="background: var(--color-bg); padding: 12px; border-radius: 4px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <strong style="color: var(--color-primary);">${vessel.name}</strong>
+                            <span style="color: var(--color-text-secondary); font-size: 11px; margin-left: 8px;">${vessel.code}</span>
+                        </div>
+                        <span style="background: ${vessel.status === 'completed' ? 'var(--color-success)' : vessel.status === 'operating' ? 'var(--color-warning)' : 'var(--color-danger)'}; color: white; padding: 2px 8px; border-radius: 3px; font-size: 11px;">${vessel.status}</span>
+                    </div>
+                    <textarea class="vessel-remark-input" onchange="updateRemark(${vessel.id}, this.value)" placeholder="Enter vessel remark...">${appState.remarks[vessel.id] || ''}</textarea>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // ===== UPDATE REMARK =====
+        function updateRemark(vesselId, value) {
+            appState.remarks[vesselId] = value;
+            appState.modified = true;
+            updateSaveStatus();
+        }
+
+        // ===== UPDATE KPIs =====
+        function updateKPIs() {
+            const totalMoves = appState.vessels.reduce((sum, v) => sum + (v.moves || 0), 0);
+            const avgCmph = (appState.vessels.filter(v => v.cmph).reduce((sum, v) => sum + v.cmph, 0) / appState.vessels.filter(v => v.cmph).length).toFixed(1);
+            
+            document.getElementById('totalMovesValue').textContent = totalMoves;
+            document.getElementById('cmphValue').textContent = avgCmph;
+            document.getElementById('dockersValue').textContent = (totalMoves * 1.46).toFixed(0);
+            document.getElementById('yardDensityValue').textContent = (70 + Math.random() * 25).toFixed(1);
+            document.getElementById('reshuffleValue').textContent = Math.floor(totalMoves * 0.015);
+            document.getElementById('gateValue').textContent = Math.floor(totalMoves * 0.38);
+        }
+
+        // ===== VALIDATION & GENERATION =====
+        function validateAndClosable() {
+            const remark = document.getElementById('remarkInput').value.trim();
+            const safety = document.getElementById('safetyInput').value.trim();
+            const windLevel = document.getElementById('windLevelInput').value;
+
+            let isValid = true;
+            const errors = [];
+
+            if (!remark) {
+                document.getElementById('remarkValidation').classList.add('show');
+                errors.push('- Operational remark is required');
+                isValid = false;
+            } else {
+                document.getElementById('remarkValidation').classList.remove('show');
+            }
+
+            if (!safety) {
+                document.getElementById('safetyValidation').classList.add('show');
+                errors.push('- Safety observations are required');
+                isValid = false;
+            } else {
+                document.getElementById('safetyValidation').classList.remove('show');
+            }
+
+            if (!windLevel) {
+                document.getElementById('windValidation').classList.add('show');
+                errors.push('- Wind level is required');
+                isValid = false;
+            } else {
+                document.getElementById('windValidation').classList.remove('show');
+            }
+
+            if (!isValid) {
+                document.getElementById('validationText').innerHTML = '<strong>Please fill in all required fields:</strong><br>' + errors.join('<br>');
+                document.getElementById('validationModal').classList.add('active');
+            }
+
+            return isValid;
+        }
+
+        function generatePDFReport() {
+            // Capture form data before validation
+            appState.shiftFeedback.remark = document.getElementById('remarkInput').value;
+            appState.shiftFeedback.safety = document.getElementById('safetyInput').value;
+            appState.shiftFeedback.windLevel = document.getElementById('windLevelInput').value;
+            appState.incomingRemark = document.getElementById('incomingRemark').value;
+
+            if (!validateAndClosable()) return;
+
+            const [date, time] = appState.currentShift.split('-');
+            const dateObj = new Date(date);
+            const timeStr = time.substring(0, 2) + ':' + time.substring(2, 4);
+            const nextTime = String((parseInt(time.substring(0, 2)) + 8) % 24).padStart(2, '0') + ':' + time.substring(2, 4);
+
+            const pdfContent = `
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; background: white; color: #333; }
+                        h1 { color: #1a3a52; border-bottom: 3px solid #e74c3c; padding-bottom: 10px; }
+                        h2 { color: #1a3a52; margin-top: 30px; font-size: 14px; }
+                        .header { background: #f5f7fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+                        .section { margin: 20px 0; page-break-inside: avoid; }
+                        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                        th, td { border: 1px solid #bdc3c7; padding: 10px; text-align: left; }
+                        th { background: #f5f7fa; font-weight: bold; }
+                        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0; }
+                        .kpi-card { background: #f5f7fa; padding: 15px; border-radius: 4px; text-align: center; }
+                        .kpi-label { font-size: 11px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 8px; }
+                        .kpi-value { font-size: 20px; font-weight: bold; color: #1a3a52; }
+                        .remark-box { background: #f5f7fa; padding: 15px; border-left: 4px solid #3498db; border-radius: 4px; margin: 10px 0; }
+                        .footer { text-align: center; margin-top: 40px; font-size: 10px; color: #95a5a6; }
+                    </style>
+                </head>
+                <body>
+                    <h1>SHIFT REPORT</h1>
+                    <div class="header">
+                        <p><strong>Date:</strong> ${dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                        <p><strong>Shift Time:</strong> ${timeStr} - ${nextTime}</p>
+                        <p><strong>Terminal:</strong> APM Terminal Port A</p>
+                        <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+                    </div>
+
+                    <h2>Shift Performance Metrics</h2>
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-label">Total Moves</div>
+                            <div class="kpi-value">${document.getElementById('totalMovesValue').textContent}</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-label">Avg CMPH</div>
+                            <div class="kpi-value">${document.getElementById('cmphValue').textContent}</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-label">Yard Density</div>
+                            <div class="kpi-value">${document.getElementById('yardDensityValue').textContent}%</div>
+                        </div>
+                    </div>
+
+                    <h2>Vessel Operations Summary</h2>
+                    <table>
+                        <tr>
+                            <th>Vessel Name</th>
+                            <th>Status</th>
+                            <th>Moves</th>
+                            <th>CMPH</th>
+                            <th>Remark</th>
+                        </tr>
+                        ${appState.vessels.map(v => `
+                            <tr>
+                                <td><strong>${v.name}</strong></td>
+                                <td>${v.status.toUpperCase()}</td>
+                                <td>${v.moves || 'N/A'}</td>
+                                <td>${v.cmph || 'N/A'}</td>
+                                <td>${appState.remarks[v.id] || '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+
+                    <h2>Operational Feedback</h2>
+                    <div class="remark-box">
+                        <strong>Remark:</strong><br>
+                        ${appState.shiftFeedback.remark || 'N/A'}
+                    </div>
+
+                    <div class="remark-box">
+                        <strong>Safety Observations:</strong><br>
+                        ${appState.shiftFeedback.safety || 'N/A'}
+                    </div>
+
+                    <div class="remark-box">
+                        <strong>Wind Level:</strong><br>
+                        ${appState.shiftFeedback.windLevel || 'N/A'}
+                    </div>
+
+                    ${appState.incomingRemark ? `
+                        <div class="remark-box">
+                            <strong>Incoming Vessel Notes:</strong><br>
+                            ${appState.incomingRemark}
+                        </div>
+                    ` : ''}
+
+                    <div class="footer">
+                        <p>This report was generated by APM Terminals Shift Report System. For questions or corrections, please contact the Shift Manager.</p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const element = document.createElement('div');
+            element.innerHTML = pdfContent;
+            document.body.appendChild(element);
+
+            const options = {
+                margin: 0,
+                filename: `shift-report-${appState.currentShift}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+            };
+
+            html2pdf().set(options).from(element).save().then(() => {
+                document.body.removeChild(element);
+                document.getElementById('successModal').classList.add('active');
+            });
+        }
+
+        // ===== UTILITIES =====
+        function goBackToSelector() {
+            document.getElementById('shiftSelectorPage').style.display = 'flex';
+            document.getElementById('shiftDetailPage').style.display = 'none';
+            switchTab('vesselOps');
+            appState.currentShift = null;
+        }
+
+        function closeModal() {
+            document.getElementById('validationModal').classList.remove('active');
+            document.getElementById('successModal').classList.remove('active');
+        }
+
+        function updateSaveStatus() {
+            const badge = document.getElementById('saveStatus');
+            if (appState.modified) {
+                badge.style.display = 'inline-block';
+                badge.classList.add('unsaved');
+            }
+        }
+    </script>
+</body>
+</html>
