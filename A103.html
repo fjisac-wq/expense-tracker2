@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker - Gestor de Gastos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Panel Base */
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel h2 {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        /* Input Panel */
+        .input-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #999;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button.full-width {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 20px;
+        }
+
+        button.secondary {
+            background: #667eea;
+            grid-column: 1 / -1;
+        }
+
+        button.danger {
+            background: #ff6b6b;
+        }
+
+        button.success {
+            background: #4caf50;
+        }
+
+        button.copied {
+            background: #4caf50;
+        }
+
+        /* Input Fields */
+        input[type="text"],
+        input[type="file"] {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        input[type="text"]:focus,
+        input[type="file"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* Labels */
+        label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 8px;
+            display: block;
+            font-weight: 600;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: #f5f5f5;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            color: #666;
+            line-height: 1.6;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-box strong {
+            color: #333;
+        }
+
+        .info-box br {
+            content: "";
+        }
+
+        /* Image Preview */
+        .image-preview {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Chat Panel */
+        .chat-panel {
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            padding-right: 8px;
+        }
+
+        .messages-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            display: flex;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.system {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .message.system .message-content {
+            background: #e8e8e8;
+            color: #333;
+        }
+
+        /* Chat Input */
+        .chat-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input-group input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.95em;
+            margin-bottom: 0;
+        }
+
+        .chat-input-group input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .chat-input-group button {
+            padding: 10px 16px;
+            margin-bottom: 0;
+        }
+
+        /* Table Section */
+        .table-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .table-header h2 {
+            font-size: 1.3em;
+            color: #333;
+            margin: 0;
+        }
+
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        tr {
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tr:last-child {
+            border-bottom: none;
+        }
+
+        td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        td:nth-child(3) {
+            text-align: right;
+        }
+
+        td:nth-child(5) {
+            text-align: center;
+        }
+
+        td:nth-child(9) {
+            text-align: center;
+        }
+
+        .grouped-table tr {
+            background-color: white;
+        }
+
+        .grouped-table tr:nth-child(odd) {
+            background-color: white;
+        }
+
+        .grouped-first {
+            background-color: #f9f9f9;
+            font-weight: 600;
+        }
+
+        /* Table Title */
+        .table-title {
+            font-size: 1.1em;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        /* Footer */
+        .footer {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .visible {
+            display: flex;
+        }
+
+        /* Feedback */
+        .feedback {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 14px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .feedback.hide {
+            animation: slideOut 0.3s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .chat-panel {
+                height: auto;
+                min-height: 400px;
+            }
+
+            .table-wrapper {
+                font-size: 0.8em;
+            }
+
+            td {
+                padding: 8px 4px;
+            }
+
+            button {
+                font-size: 0.8em;
+                padding: 10px 12px;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group input {
+            margin-bottom: 0;
+        }
+
+        .form-group button {
+            width: 100%;
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>💰 Expense Tracker</h1>
+            <p>Gestor de gastos inteligente</p>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Input Panel -->
+            <div class="panel input-panel">
+                <h2>📥 Entrada de Datos</h2>
+
+                <!-- Camera/Gallery Buttons -->
+                <div class="button-group">
+                    <button id="cameraBtn" onclick="document.getElementById('cameraInput').click()">
+                        📷 Cámara
+                    </button>
+                    <button id="galleryBtn" onclick="document.getElementById('galleryInput').click()">
+                        🖼️ Galería
+                    </button>
+                </div>
+
+                <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleImageUpload(event)">
+                <input type="file" id="galleryInput" accept="image/*" onchange="handleImageUpload(event)">
+
+                <!-- Image Preview -->
+                <div id="imagePreview" class="image-preview hidden"></div>
+
+                <!-- Mic Button -->
+                <button id="micBtn" class="full-width" onclick="startListening()">
+                    🎤 Dictar Gasto
+                </button>
+
+                <!-- Manual Input -->
+                <div class="form-group">
+                    <label for="expenseInput">Insertar Gasto Manualmente</label>
+                    <input 
+                        type="text" 
+                        id="expenseInput" 
+                        placeholder="Ej: Farmacia 15.99 Medicinas"
+                        onkeypress="if(event.key==='Enter') processManualInput()"
+                    >
+                    <button class="secondary" onclick="processManualInput()">Insert</button>
+                </div>
+
+                <!-- Info Box -->
+                <div class="info-box">
+                    <strong>📌 Formatos válidos:</strong><br>
+                    • Dictar: "Gasolina importe 25.50 Combustible"<br>
+                    • Escribir: "Gasolina 25.50 Combustible"<br>
+                    • Ticket: "ticket Mercadona 45.99 INV001"<br>
+                    • "total" para ver resumen<br>
+                    • "reseteo" para empezar
+                </div>
+            </div>
+
+            <!-- Chat Panel -->
+            <div class="panel chat-panel">
+                <h2>💬 Chat</h2>
+
+                <div class="messages-container" id="messagesContainer">
+                    <!-- Messages will be added here -->
+                </div>
+
+                <div class="chat-input-group">
+                    <input 
+                        type="text" 
+                        id="chatInput" 
+                        placeholder="Escribe comando..."
+                        onkeypress="if(event.key==='Enter') sendMessage()"
+                    >
+                    <button onclick="sendMessage()" style="margin: 0;">
+                        ➤ Enviar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Section -->
+        <div id="tableSection" class="table-section hidden">
+            <div class="table-header">
+                <h2>📊 Resumen de Gastos</h2>
+                <button id="copyBtn" onclick="copyToExcel()">
+                    📋 Copy for Excel
+                </button>
+            </div>
+
+            <!-- Main Table -->
+            <div class="table-wrapper">
+                <table id="mainTable"></table>
+            </div>
+
+            <!-- Grouped Table -->
+            <h3 class="table-title">Agrupado por Factura</h3>
+            <div class="table-wrapper">
+                <table id="groupedTable" class="grouped-table"></table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div id="footer" class="footer hidden">
+            <button class="danger" onclick="resetData()">
+                🔄 Resetear
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let expenses = [];
+        let messages = [];
+        let recognitionRef = null;
+        let isListening = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSpeechRecognition();
+            addMessage('¡Hola! Sube foto, dicta o escribe un gasto.', 'system');
+        });
+
+        // Speech Recognition Setup
+        function initializeSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                recognitionRef = new SpeechRecognition();
+                recognitionRef.lang = 'es-ES';
+                recognitionRef.continuous = false;
+
+                recognitionRef.onstart = () => {
+                    isListening = true;
+                    updateMicButton();
+                };
+
+                recognitionRef.onend = () => {
+                    isListening = false;
+                    updateMicButton();
+                };
+
+                recognitionRef.onresult = (event) => {
+                    let transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    if (transcript) {
+                        processVoiceInput(transcript);
+                    }
+                };
+
+                recognitionRef.onerror = () => {
+                    addMessage('❌ No se detectó sonido. Intenta de nuevo.', 'system');
+                    isListening = false;
+                    updateMicButton();
+                };
+            }
+        }
+
+        function updateMicButton() {
+            const btn = document.getElementById('micBtn');
+            if (isListening) {
+                btn.textContent = '🎤 Escuchando...';
+                btn.disabled = true;
+            } else {
+                btn.textContent = '🎤 Dictar Gasto';
+                btn.disabled = false;
+            }
+        }
+
+        function startListening() {
+            if (recognitionRef && !isListening) {
+                recognitionRef.start();
+            }
+        }
+
+        // Text to Number Conversion
+        function textToNumber(text) {
+            const numberMap = {
+                'cero': '0', 'uno': '1', 'dos': '2', 'tres': '3', 'cuatro': '4',
+                'cinco': '5', 'seis': '6', 'siete': '7', 'ocho': '8', 'nueve': '9',
+                'diez': '10', 'once': '11', 'doce': '12', 'trece': '13', 'catorce': '14',
+                'quince': '15', 'dieciséis': '16', 'diecisiete': '17', 'dieciocho': '18',
+                'diecinueve': '19', 'veinte': '20', 'treinta': '30', 'cuarenta': '40',
+                'cincuenta': '50', 'sesenta': '60', 'setenta': '70', 'ochenta': '80',
+                'noventa': '90'
+            };
+
+            let result = text.toLowerCase();
+            Object.entries(numberMap).forEach(([word, num]) => {
+                result = result.replace(new RegExp(`\\b${word}\\b`, 'g'), num);
+            });
+
+            result = result.replace(/veinti(\d)/g, (match, digit) => String(20 + parseInt(digit)));
+            result = result.replace(/treinta y (\d)/g, (match, digit) => String(30 + parseInt(digit)));
+            result = result.replace(/cuarenta y (\d)/g, (match, digit) => String(40 + parseInt(digit)));
+            result = result.replace(/cincuenta y (\d)/g, (match, digit) => String(50 + parseInt(digit)));
+
+            return result;
+        }
+
+        // Process Voice Input
+        function processVoiceInput(transcript) {
+            addMessage(transcript, 'user');
+            
+            const lowerTranscript = transcript.toLowerCase();
+            
+            if (!lowerTranscript.includes('importe')) {
+                addMessage('❌ Formato: [Concepto] importe [Importe] [Sección]', 'system');
+                return;
+            }
+
+            const parts = lowerTranscript.split('importe');
+            const concept = parts[0].trim();
+            const rest = parts[1].trim();
+
+            const convertedRest = textToNumber(rest);
+
+            const numberMatch = convertedRest.match(/(\d+[.,]\d+|\d+)/);
+            if (!numberMatch) {
+                addMessage('❌ El importe debe ser un número válido', 'system');
+                return;
+            }
+
+            const amount = numberMatch[0].replace(',', '.');
+            const section = convertedRest.replace(numberMatch[0], '').trim();
+
+            if (!section) {
+                addMessage('❌ Agrégale una sección al gasto', 'system');
+                return;
+            }
+
+            addExpense(concept, amount, section);
+        }
+
+        // Process Manual Input
+        function processManualInput() {
+            const text = document.getElementById('expenseInput').value;
+            if (!text.trim()) return;
+            
+            addMessage(text, 'user');
+            processTextInput(text);
+            document.getElementById('expenseInput').value = '';
+        }
+
+        // Process Text Input
+        function processTextInput(text) {
+            const trimmed = text.trim().toLowerCase();
+
+            if (trimmed === 'reseteo') {
+                expenses = [];
+                messages = [];
+                updateUI();
+                addMessage('🔄 Resetado', 'system');
+                return;
+            }
+
+            if (trimmed === 'total') {
+                addMessage('📊 Resumen generado', 'system');
+                return;
+            }
+
+            // Ticket command
+            if (trimmed.startsWith('ticket ')) {
+                const parts = trimmed.replace('ticket ', '').split(' ');
+                if (parts.length >= 3) {
+                    const store = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+                    const amount = parts[1];
+                    const code = parts.slice(2).join(' ');
+                    addExpense(null, amount, 'Compra', store, code);
+                } else {
+                    addMessage('❌ Formato: ticket [tienda] [total] [código]', 'system');
+                }
+                return;
+            }
+
+            // Parse expense: concept amount section
+            const parts = text.trim().split(' ');
+            if (parts.length >= 3) {
+                const amount = parts[parts.length - 2];
+                const section = parts[parts.length - 1];
+                const concept = parts.slice(0, -2).join(' ');
+
+                if (!isNaN(amount.replace(',', '.'))) {
+                    addExpense(concept, amount.replace(',', '.'), section);
+                    return;
+                }
+            }
+
+            addMessage('📌 Formato: [Concepto] [Importe] [Sección] o ticket [tienda] [total] [código]', 'system');
+        }
+
+        // Add Expense
+        function addExpense(concept, amount, section, store = null, invoiceCode = null) {
+            const today = new Date().toISOString().split('T')[0];
+            const monthNum = new Date().getMonth() + 1;
+            const yearMonth = parseInt(`${new Date().getFullYear()}${String(monthNum).padStart(2, '0')}`);
+
+            const expense = {
+                date: today,
+                concept: store ? 'Super' : concept,
+                amount: parseFloat(amount),
+                group: store || 'Gasto',
+                saldo: 0,
+                mes: yearMonth,
+                section: section.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(''),
+                invoice: invoiceCode || '-',
+                monthNum: monthNum
+            };
+
+            expenses.push(expense);
+
+            if (store) {
+                addMessage(`✅ Ticket: ${store} - ${amount}€`, 'system');
+            } else {
+                addMessage(`✅ Gasto: ${concept} - ${amount}€`, 'system');
+            }
+
+            updateUI();
+        }
+
+        // Handle Image Upload
+        function handleImageUpload(event) {
+            const file = event.target.files?.[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imageData = e.target?.result;
+                    document.getElementById('imagePreview').innerHTML = `<img src="${imageData}" alt="Ticket">`;
+                    document.getElementById('imagePreview').classList.remove('hidden');
+
+                    // Simulate ticket data
+                    const stores = ['Mercadona', 'Carrefour', 'Alcampo', 'Repsol', 'Farmacia'];
+                    const store = stores[Math.floor(Math.random() * stores.length)];
+                    const amount = (Math.random() * 50 + 10).toFixed(2);
+                    const code = `INV${Math.floor(Math.random() * 9000) + 1000}`;
+                    
+                    addMessage(`📸 Ticket detectado de ${store}`, 'system');
+                    addExpense(null, amount, 'Compra', store, code);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Add Message to Chat
+        function addMessage(text, role = 'user') {
+            messages.push({ role, text });
+            renderMessages();
+        }
+
+        // Render Messages
+        function renderMessages() {
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = messages.map(msg => `
+                <div class="message ${msg.role}">
+                    <div class="message-content">${msg.text}</div>
+                </div>
+            `).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Send Chat Message
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value;
+            if (!text.trim()) return;
+
+            addMessage(text, 'user');
+            processTextInput(text);
+            input.value = '';
+        }
+
+        // Copy to Excel
+        function copyToExcel() {
+            if (expenses.length === 0) {
+                addMessage('❌ Agrega datos primero', 'system');
+                return;
+            }
+
+            let table = expenses
+                .map(e => `${e.date}\t${e.concept}\t-${e.amount.toString().replace('.', ',')}\t${e.group}\t${e.saldo}\t${e.mes}\t${e.section}\t${e.invoice}\t${e.monthNum}`)
+                .join('\n');
+
+            navigator.clipboard.writeText(table).then(() => {
+                const btn = document.getElementById('copyBtn');
+                btn.textContent = '✅ Copiado';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy for Excel';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // Reset Data
+        function resetData() {
+            expenses = [];
+            messages = [];
+            updateUI();
+            addMessage('🔄 Resetado', 'system');
+        }
+
+        // Render Tables
+        function renderTables() {
+            const mainTable = document.getElementById('mainTable');
+            const groupedTable = document.getElementById('groupedTable');
+
+            // Main table
+            mainTable.innerHTML = expenses.map(e => `
+                <tr>
+                    <td>${e.date}</td>
+                    <td>${e.concept}</td>
+                    <td>-${e.amount.toString().replace('.', ',')}</td>
+                    <td>${e.group}</td>
+                    <td>${e.saldo}</td>
+                    <td>${e.mes}</td>
+                    <td>${e.section}</td>
+                    <td>${e.invoice}</td>
+                    <td>${e.monthNum}</td>
+                </tr>
+            `).join('');
+
+            // Grouped table
+            const grouped = expenses.reduce((acc, exp) => {
+                if (!acc[exp.invoice]) acc[exp.invoice] = [];
+                acc[exp.invoice].push(exp);
+                return acc;
+            }, {});
+
+            let groupedHTML = '';
+            Object.entries(grouped).forEach(([invoice, items]) => {
+                items.forEach((e, i) => {
+                    groupedHTML += `
+                        <tr ${i === 0 ? 'class="grouped-first"' : ''}>
+                            <td>${e.date}</td>
+                            <td>${e.concept}</td>
+                            <td>-${e.amount.toString().replace('.', ',')}</td>
+                            <td>${e.group}</td>
+                            <td>${e.saldo}</td>
+                            <td>${e.mes}</td>
+                            <td>${e.section}</td>
+                            <td>${i === 0 ? '<strong>' + e.invoice + '</strong>' : e.invoice}</td>
+                            <td>${e.monthNum}</td>
+                        </tr>
+                    `;
+                });
+            });
+
+            groupedTable.innerHTML = groupedHTML;
+        }
+
+        // Update UI
+        function updateUI() {
+            if (expenses.length > 0) {
+                document.getElementById('tableSection').classList.remove('hidden');
+                document.getElementById('footer').classList.remove('hidden');
+                renderTables();
+            } else {
+                document.getElementById('tableSection').classList.add('hidden');
+                document.getElementById('footer').classList.add('hidden');
+            }
+            renderMessages();
+        }
+    </script>
+</body>
+</html>
